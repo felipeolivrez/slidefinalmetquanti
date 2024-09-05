@@ -1,0 +1,604 @@
+---
+title: "Implementação do Programa de Diplomacia Cultural (PDC) pelo Ministério de Relações Exteriores do Brasil (MRE/Itamaraty) nos anos de 2013 e 2022"
+author: "Felipe Augusto Oliveira Rezende (231109414)"
+date: "Setembro de 2024"
+output: ioslides_presentation
+css: styles.css
+---
+```{r Chunk1, include=FALSE}
+
+###1. Rodando Pacotes
+
+library(xlsx)
+library(readxl)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(rmarkdown)
+library(xaringan)
+library(stringr)
+
+###2. Carregando dataframes PDC 2013 e PDC 2022
+
+read_excel("C:/Users/Felipe/Desktop/Doutorado IRel UnB/Fontes e Materiais de Pesquisa Empírica Doutorado/Base de Dados PDC 2013_MetQuanti_FelipeAugustoOliveiraRezende.xlsx")
+PDC_2013 <- read_excel("C:/Users/Felipe/Desktop/Doutorado IRel UnB/Fontes e Materiais de Pesquisa Empírica Doutorado/Base de Dados PDC 2013_MetQuanti_FelipeAugustoOliveiraRezende.xlsx")
+
+read_excel("C:/Users/Felipe/Desktop/Doutorado IRel UnB/Fontes e Materiais de Pesquisa Empírica Doutorado/Base de Dados PDC 2013_MetQuanti_FelipeAugustoOliveiraRezende.xlsx")
+PDC_2022 <- read_excel("C:/Users/Felipe/Desktop/Doutorado IRel UnB/Fontes e Materiais de Pesquisa Empírica Doutorado/Base de Dados PDC 2022_MetQuanti_FelipeAugustoOliveiraRezende.xlsx")
+
+##2.1. Adequando dataframes PDC 2013 e PDC 2022
+
+#2.1.1. Variável 'Representação Oficial (Posto) responsável' (Coluna3) PDC 2022
+
+PDC_2022 <- PDC_2022 %>%
+  mutate(`Representação Oficial (Posto) responsável` = case_when(
+    grepl("\\(CG\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("CONSBRAS", gsub("\\s*\\(CG\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(E\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("BRASEMB", gsub("\\s*\\(E\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(D\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("DELBRAS", gsub("\\s*\\(D\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(EC\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("ECBRAS", gsub("\\s*\\(EC\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(M\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("MBRAS", gsub("\\s*\\(M\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(VC\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("VCBRAS", gsub("\\s*\\(VC\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    grepl("\\(ER\\)", `Representação Oficial (Posto) responsável`) ~ 
+      paste("ERBRAS", gsub("\\s*\\(ER\\)\\s*", "", `Representação Oficial (Posto) responsável`)),
+    TRUE ~ `Representação Oficial (Posto) responsável`
+  ))
+
+##2.1.2. Excluir variáveis "Destinação (Cidade)" (Coluna 4) e "Subdomínio Cultural" (Coluna 10) de PDC_2013
+
+PDC_2013 <- PDC_2013 %>%
+  select(-c( 'Destinação (Cidade)', 'Subdomínio Cultural'))
+
+##2.1.3. Excluir variáveis "Destinação (Cidade)" (Coluna 4) e "Descrição do Evento/Ação" (Coluna 10) de PDC_2022
+PDC_2022 <- PDC_2022 %>%
+  select(-c('Destinação (Cidade)', 'Descrição do Evento/Ação'))
+```
+
+```{r Chunk 2, include=FALSE}
+
+n_continente2013 <- PDC_2013 %>% 
+  group_by(`Destinação (Continente)`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:7)
+```
+
+```{r Chunk 3, include=FALSE}
+
+n_continente2022 <- PDC_2022 %>% 
+  group_by(`Destinação (Continente)`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:7)
+```
+
+```{r Chunk 4, include=FALSE}
+
+n_continente <- full_join(n_continente2013, n_continente2022, by = "Destinação (Continente)", suffix = c(".2013", ".2022"))
+
+n_continente_long <- n_continente %>%
+  pivot_longer(
+    cols = c("Num_Eventos.2013", "Num_Eventos.2022"),
+    names_to = "Ano",
+    values_to = "Num_Eventos",
+    names_prefix = "Num_Eventos."
+  )
+```
+
+```{r Chunk 5, include=FALSE}
+
+n_dominiocultural2013 <- PDC_2013 %>% 
+  group_by(`Domínio Cultural`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:13)
+```
+
+```{r Chunk 6, include=FALSE}
+
+n_dominiocultural2022 <- PDC_2022 %>% 
+  group_by(`Domínio Cultural`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:13)
+```
+
+```{r Chunk 7, include=FALSE}
+
+n_dominiocultural <- full_join(n_dominiocultural2013, n_dominiocultural2022, by = "Domínio Cultural", suffix = c(".2013", ".2022"))
+
+n_dominiocultural_long <- n_dominiocultural %>%
+  pivot_longer(
+    cols = c("Num_Eventos.2013", "Num_Eventos.2022"),
+    names_to = "Ano",
+    values_to = "Num_Eventos",
+    names_prefix = "Num_Eventos."
+  )
+```
+
+```{r Chunk 8, include=FALSE}
+
+ranking_postos2013 <- PDC_2013 %>% 
+  group_by(`Representação Oficial (Posto) responsável`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:15)
+```
+
+```{r Chunk 9, include=FALSE}
+
+ranking_postos2022 <- PDC_2022 %>% 
+  group_by(`Representação Oficial (Posto) responsável`) %>% 
+  summarise(Num_Eventos = n()) %>% 
+  arrange(desc(Num_Eventos)) %>% 
+  slice(1:15)
+```
+
+```{r Chunk 10, include=FALSE}
+
+ranking_postos <- full_join(ranking_postos2013, ranking_postos2022, by = "Representação Oficial (Posto) responsável", suffix = c(".2013", ".2022")) %>%
+  mutate(Status = case_when(
+    !is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Repetido",
+    is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Novo em 2022",
+    !is.na(Num_Eventos.2013) & is.na(Num_Eventos.2022) ~ "Somente 2013"
+  ))
+
+ranking_postos <- ranking_postos %>%
+  arrange(desc(Num_Eventos.2022), desc(Num_Eventos.2013))
+```
+
+```{r Chunk 11, , include=FALSE}
+
+PDC_2013_gen_raça <- PDC_2013 %>% 
+  mutate(Paridade_Gênero_Indicador = ifelse(`Paridade Gênero` == 1, "Sim", "Não"),
+         Paridade_Raça_Indicador = ifelse(`Paridade Raça` == 1, "Sim", "Não"))
+
+head(PDC_2013_gen_raça)
+```
+
+```{r Chunk 12, , include=FALSE}
+
+percent_paridade_genero2013 <- PDC_2013_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_Genero = sum(`Paridade Gênero` == 1),
+            Percent_Paridade_Genero = (Eventos_Paridade_Genero / Total_Eventos) * 100)
+
+head(min(percent_paridade_genero2013))
+```
+
+```{r Chunk 13, , include=FALSE}
+
+percent_paridade_raça2013 <- PDC_2013_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_raça = sum(`Paridade Raça` == 1),
+            Percent_Paridade_raça = (Eventos_Paridade_raça / Total_Eventos) * 100)
+
+head(min(percent_paridade_raça2013))
+```
+
+```{r Chunk 14, , include=FALSE}
+
+percent_paridade_genero_raça2013 <- PDC_2013_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_Genero_raça = sum(`Paridade Gênero` == 1 & `Paridade Raça` == 1),
+            Percent_Paridade_Genero_raça_Juntos = (Eventos_Paridade_Genero_raça / Total_Eventos) * 100)
+
+head(min(percent_paridade_genero_raça2013))
+```
+
+```{r Chunk 15, , include=FALSE}
+
+percentuaistotais_paridade2013 <- data.frame(
+  Indicador = c("Paridade de Gênero", "Paridade de Raça", "Paridade de Gênero e Raça"),
+  Percentual = c(percent_paridade_genero2013$Percent_Paridade_Genero,
+                 percent_paridade_raça2013$Percent_Paridade_raça,
+                 percent_paridade_genero_raça2013$Percent_Paridade_Genero_raça_Juntos)
+)
+
+head(percentuaistotais_paridade2013)
+```
+
+```{r Chunk 16, , include=FALSE}
+
+PDC_2022_gen_raça <- PDC_2022 %>% 
+  mutate(Paridade_Gênero_Indicador = ifelse(`Paridade Gênero` == 1, "Sim", "Não"),
+         Paridade_Raça_Indicador = ifelse(`Paridade Raça` == 1, "Sim", "Não"))
+
+head(PDC_2022_gen_raça)
+```
+
+```{r Chunk 17, , include=FALSE}
+
+percent_paridade_genero2022 <- PDC_2022_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_Genero = sum(`Paridade Gênero` == 1),
+            Percent_Paridade_Genero = (Eventos_Paridade_Genero / Total_Eventos) * 100)
+
+head(min(percent_paridade_genero2022))
+```
+
+```{r Chunk 18, , include=FALSE}
+
+percent_paridade_raça2022 <- PDC_2022_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_raça = sum(`Paridade Raça` == 1),
+            Percent_Paridade_raça = (Eventos_Paridade_raça / Total_Eventos) * 100)
+
+head(min(percent_paridade_raça2022))
+```
+
+```{r Chunk 19, include=FALSE}
+
+percent_paridade_genero_raça2022 <- PDC_2022_gen_raça %>% 
+  summarise(Total_Eventos = n(),
+            Eventos_Paridade_Genero_raça = sum(`Paridade Gênero` == 1 & `Paridade Raça` == 1),
+            Percent_Paridade_Genero_raça_Juntos = (Eventos_Paridade_Genero_raça / Total_Eventos) * 100)
+
+head(min(percent_paridade_genero_raça2022))
+```
+
+```{r Chunk 20, include=FALSE}
+
+percentuaistotais_paridade2022 <- data.frame(
+  Indicador = c("Paridade de Gênero", "Paridade de Raça", "Paridade de Gênero e Raça"),
+  Percentual = c(percent_paridade_genero2022$Percent_Paridade_Genero,
+                 percent_paridade_raça2022$Percent_Paridade_raça,
+                 percent_paridade_genero_raça2022$Percent_Paridade_Genero_raça_Juntos)
+)
+
+head(percentuaistotais_paridade2022)
+```
+
+```{r Chunk 21, include=FALSE}
+
+PDC_2013_genero <- PDC_2013 %>% filter(`Paridade Gênero` == 1)
+PDC_2013_raça <- PDC_2013 %>% filter(`Paridade Raça` == 1)
+PDC_2013_gen_raça <- PDC_2013 %>% filter(`Paridade Gênero` == 1, `Paridade Raça` == 1)
+
+n_total2013 <- nrow(PDC_2013)
+```
+
+```{r Chunk 22, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+prop_test_genero2013 <- prop.test(n = n_total2013, x = nrow(PDC_2013_genero))
+prop_test_raça2013 <- prop.test(n = n_total2013, x = nrow(PDC_2013_raça))
+prop_test_gen_raça2013 <- prop.test(n = n_total2013, x = nrow(PDC_2013_gen_raça))
+
+props2013 <- c(prop_test_genero2013$estimate, prop_test_raça2013$estimate, prop_test_gen_raça2013$estimate)
+ci_lowers <- c(prop_test_genero2013$conf.int[1], prop_test_raça2013$conf.int[1], prop_test_gen_raça2013$conf.int[1])
+ci_uppers <- c(prop_test_genero2013$conf.int[2], prop_test_raça2013$conf.int[2], prop_test_gen_raça2013$conf.int[2])
+
+prop_identitario_PDC2013 <- data.frame(
+  Categoria = c("Paridade Gênero", "Paridade Raça", "Paridade Gênero e Raça"),
+  Proporcao = props2013,
+  CI_lower = ci_lowers,
+  CI_upper = ci_uppers
+)
+```
+
+```{r Chunk 23, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(prop_identitario_PDC2013, aes(x = Categoria, y = Proporcao)) +
+  geom_point(size = 3, colour = "#9A32CD") +
+  geom_errorbar(aes(ymin = CI_lower, ymax = CI_upper), width = 0.2, colour = "#9A32CD") + 
+  ylim(0, 1) +
+  labs(title = "Estimativas Intervalares (Proporção de Gênero/Raça nos Eventos Culturais PDC 2013)",
+       x = "Indicadores identitários PDC 2013",
+       y = "Proporção") +
+  theme_minimal(base_family = "Helvetica") +
+  theme(
+    panel.background = element_rect(fill = "black", colour = "black"),
+    plot.title = element_text(colour = "black", face = "bold"),
+    axis.title = element_text(colour = "black", face = "bold"),
+    axis.text = element_text(colour = "black"),
+    legend.text = element_text(color = "black"), 
+    legend.title = element_text(color = "black")
+  )
+```
+
+```{r Chunk 24, include=FALSE}
+
+PDC_2022_genero <- PDC_2022 %>% filter(`Paridade Gênero` == 1)
+PDC_2022_raça <- PDC_2022 %>% filter(`Paridade Raça` == 1)
+PDC_2022_gen_raça <- PDC_2022 %>% filter(`Paridade Gênero` == 1, `Paridade Raça` == 1)
+
+n_total2022 <- nrow(PDC_2022)
+```
+
+```{r Chunk 25, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+prop_test_genero2022 <- prop.test(n = n_total2022, x = nrow(PDC_2022_genero))
+prop_test_raça2022 <- prop.test(n = n_total2022, x = nrow(PDC_2022_raça))
+prop_test_gen_raça2022 <- prop.test(n = n_total2022, x = nrow(PDC_2022_gen_raça))
+
+props2022 <- c(prop_test_genero2022$estimate, prop_test_raça2022$estimate, prop_test_gen_raça2022$estimate)
+ci_lowers <- c(prop_test_genero2022$conf.int[1], prop_test_raça2022$conf.int[1], prop_test_gen_raça2022$conf.int[1])
+ci_uppers <- c(prop_test_genero2022$conf.int[2], prop_test_raça2022$conf.int[2], prop_test_gen_raça2022$conf.int[2])
+
+prop_identitario_PDC2022 <- data.frame(
+  Categoria = c("Paridade Gênero", "Paridade Raça", "Paridade Gênero e Raça"),
+  Proporcao = props2022,
+  CI_lower = ci_lowers,
+  CI_upper = ci_uppers
+)
+```
+
+```{r Chunk 26, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(prop_identitario_PDC2022, aes(x = Categoria, y = Proporcao)) +
+  geom_point(size = 3, colour = "#EE7600") +
+  geom_errorbar(aes(ymin = CI_lower, ymax = CI_upper), width = 0.2, colour = "#EE7600") + 
+  ylim(0, 1) +
+  labs(title = "Estimativas Intervalares (Proporção de Gênero/Raça nos Eventos Culturais PDC 2022)",
+       x = "Indicadores identitários PDC 2022",
+       y = "Proporção") +
+  theme_minimal(base_family = "Helvetica") +
+  theme(
+    panel.background = element_rect(fill = "black", colour = "black"),
+    plot.title = element_text(colour = "black", face = "bold"),
+    axis.title = element_text(colour = "black", face = "bold"),
+    axis.text = element_text(colour = "black"),
+    legend.text = element_text(color = "black"), 
+    legend.title = element_text(color = "black")
+  )
+```
+---
+---
+## Objeto
+
+Identificar, sistematizar e analisar dados relativos à implementação da política pública de política externa *'Programa de Diplomacia Cultural'* (PDC), por parte da *Divisão de Operações de Difusão Cultural* (DODC), vinculada ao antigo *Departamento Cultural* (DC) [2013], e da *Divisão de Ações de Promoção da Cultura Brasileira*, do atual *Instituto Guimarães Rosa* (IGC) [2022] do  Ministério de Relações Exteriores do Brasil (MRE/Itamaraty), como parte dos esfoços de diplomacia cultural mobilizados pela Política Externa Brasileira (PEB) nos exercícios anuais de 2013 e 2022.
+
+---
+---
+## Objetivos
+
+A interposição do método CDDAF sobre dados relacionados à implementação do PDC 2013 e PDC 2022 está orientada a responder às seguintes questões de pesquisa: 
+
+- Qual a quantidade ('n') de ações/eventos PDC implementados em 2013 e em 2022? Houve incremento quantitativo nesse expediente?
+- Quais as destinações (continentes) receberam  maior quantidade ('n') de ações/eventos PDC em 2013 e 2022?
+- Quais os domínios culturais predominantes nas ações/eventos PDC em 2013 e 2022? 
+- Qual a proporcionalidade de indicadores indentitários de gênero e raça nos conteúdos artístico-culturais funcionalizados pelos PDC em 2013 e 2022?
+
+---
+---
+## Contexto
+
+- A evolução da literatura nacional no tema da diplomacia cultural brasileira têm carater indiscutivelmente histórico-descritivo, uma vez que mormente derivada de contribuições gestadas por intelectuais diplomatas. 
+
+- O tom oficioso geralmente encampado nestas contribuições é pouco elucidador sobre as práticas de Estado/governo em se tratando da implementação de políticas de diplomacia cultural do Brasil, i.e, quais o padrões de preferência em termos de destinação geográfica, conteúdos mobilizados, dentre outros marcadores de necessária reflexão na funcionalização deste expediente.
+
+- Se faz urgente a mobilização de esforços científicos capazes de mensurar e verificar, a partir de metodologias baseadas em evidências, os resultados alcançados por meio da implementação de políticas públicas de política externa na arena setorial da diplomacia cultural brasileira.
+
+---
+---
+## Métodos {.custom-font}
+
+- A pesquisa consistiu em esforços de coleta, codificação, tratamento e análise estatística de dados relativos a conteúdos, destinos e características identitárias marcantes nas ações/eventos de difusão internacional da cultura do Brasil, conforme facilitados através dos programas PDC 2013 e PDC 2022.
+
+- O recorte temporal da pesquisa é arbitrário, mas pretende ilustrar, minimamente, a evolução diacrônica do expediente diplomática-cultural brasileiro a partir de dois exercícios anuais selecionados, quais sejam o de 2013 e 2022. Vale dizer que este intento faz parte de um desenho de pesquisa mais amplo, com recorte de 2013 a 2023. Aqui, buscou-se avaliar as relações entre algumas das variáveis de interesse no primeiro e no penúltimo ano do recorte temporal mais amplo.
+
+- Emprega-se o modelo metodológico **Cutural Diplomacy Data Analisys Framework (CDDAF)** (Carrijo, 2016), que implica ser o marco científico em se tratando do estudo baseado em evidências sobre a diplomacia cultural, tendo como unidade de análise primordial os chamados projetos de diplomacia cultural tocados pelos Estados, neste caso, os próprios PDC 2013 e PDC 2022 facilitado pelas repartições competentes do MRE/Itamaraty.
+
+- Adota-se do modelo CDDAF os seguintes variáveis de pesquisa quantitativa/qualitativa sobre a diplomacia cultural brasileira: (1) **número de projetos**; (2) **domínio cultural**, e; (3) **destinação geográfica (continente)** das ações empenhadas; além de mais um indicador qualitativo subjacente qual seja: (a) **paridade e proporcionalidade de gênero e raça** nas ações/eventos implementados.
+
+---
+---
+## Métodos {.custom-font}
+
+- *Fontes* e *Coleta de Dados*: informações constantes nos chamados **Relatórios Anuais dos Programas PDC de 2013 e 2022**. Referidos documentos oficiais foram acessados via Lei de Acesso à Informação (LAI) n. 12527/11.
+
+- *Codificação*: a codificação e extração de informações expressas nestes Relatórios Anuais foi estritamente orientada pelo método CDDAF (Carrijo, 2016), e obedeceu à uma moldura de códigos e categorias informados tanto pela literatura quanto pelo próprio expediente prático da diplomacia cultural brasileira. A fase de codificação foi conduzida com o suporte de CAQDAS, nomeadamente o *Atlas.TI*.
+
+- *Tratamento*: foram construídas bases de dados distintas a partir de informações integrais oriundas dos mencionados **Relatórios Anuais dos PDC 2013 e 2022**. As variáveis quanti-quali (1) **número de projetos**; (2) **domínio cultural**, e; (3) **destinação geográfica (continente)** foram extraídas objetivamente, por meio da moldura de codificação e em face das evidências substantitvas documentadas na fonte em questão. O indicador qualitativo subjascente sobre a (a) **paridade e proporcionalidade de gênero e raça** foi atribuído a partir da reflexividade e posicionalidade do pesquisador diante dos dados expressos pelas fontes.
+
+- *Análise Estatística*: construção de relações entre as variáveis quali-quanti de interesse, mensuração de estimativas intervalares e intervalos de confiança relacionados às quantidades e proporcionalidades alcançados pela rodagem do modelo, em face das amostras selecionadas. Foi empregado o software *R-Studio*, para tanto.
+
+---
+---
+```{r Chunk 27, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+n_continente2013 <- n_continente2013 %>%
+  mutate(proporcao = Num_Eventos / sum(Num_Eventos)) %>%
+  arrange(desc(`Destinação (Continente)`)) %>%
+  mutate(posicao_final = cumsum(proporcao),
+         posicao_inicio = lag(posicao_final, default = 0),
+         posicao_label = (posicao_inicio + posicao_final) / 2,
+         label = paste0(round(proporcao * 100, 1), "%"))
+
+ggplot(n_continente2013, aes(ymax = posicao_final, ymin = posicao_inicio, xmax = 4, xmin = 3, fill = `Destinação (Continente)`)) +
+  geom_rect() +
+  coord_polar(theta = "y") +
+  xlim(c(2, 4)) +
+  scale_fill_manual(values = c("#ffeda0", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#bd0026", "#800026")) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(family = "sans", face = "bold", size = 16, hjust = 0.5)
+  ) +
+  ggtitle("Proporção 'N' Ações/Eventos PDC 2013 x Continente") +
+  geom_text(
+    aes(x = 3.5, y = posicao_label, label = label),
+    color = "black",
+    fontface = "bold",
+    size = 5
+  )
+```
+---
+```{r Chunk 28, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(n_dominiocultural2013, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
+  geom_bar(stat = "identity", fill = "#bd0026") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "'N' Ações/Eventos PDC 2013 x Domínio Cultural",
+       x = "Domínio Cultural",
+       y = "Número de Eventos") +
+  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2013$Num_Eventos), by = 10)) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 29, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+n_continente2022 <- n_continente2022 %>%
+  mutate(proporcao = Num_Eventos / sum(Num_Eventos)) %>%
+  arrange(desc(`Destinação (Continente)`)) %>%
+  mutate(posicao_final = cumsum(proporcao),
+         posicao_inicio = lag(posicao_final, default = 0),
+         posicao_label = (posicao_inicio + posicao_final) / 2,
+         label = paste0(round(proporcao * 100, 1), "%"))
+
+ggplot(n_continente2022, aes(ymax = posicao_final, ymin = posicao_inicio, xmax = 4, xmin = 3, fill = `Destinação (Continente)`)) +
+  geom_rect() +
+  coord_polar(theta = "y") +
+  xlim(c(2, 4)) +
+  scale_fill_manual(values = c("#e5f5e0", "#a1d99b", "#74c476", "#41ab5d", "#238b45", "#006d2c", "#00441b")) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(family = "sans", face = "bold", size = 16, hjust = 0.5)
+  ) +
+  ggtitle("Proporção 'N' Ações/Eventos PDC 2022 x Continente") +
+  geom_text(
+    aes(x = 3.5, y = posicao_label, label = label),
+    color = "black",
+    fontface = "bold",
+    size = 5
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 30, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(n_dominiocultural2022, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
+  geom_bar(stat = "identity", fill = "#00441b") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "'N' Ações/Eventos PDC 2022 x Domínio Cultural",
+       x = "Domínio Cultural",
+       y = "Número de Eventos") +
+  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2022$Num_Eventos), by = 10)) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 31, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(n_continente_long, aes(x = Ano, y = Num_Eventos, group = `Destinação (Continente)`, color = `Destinação (Continente)`)) +
+  geom_line(linewidth = 0.75) +
+  geom_point(size = 3) +
+  labs(title = "Variação do 'N' de Ações/Eventos PDC 2013 e 2022 por Continente",
+       x = "Ano",
+       y = "Número de Eventos",
+       color = "Continente") +
+  theme_minimal() +
+  scale_color_manual(values = c("#8B4513", "#CD2626", "#00008B", "#CDAD00", "#CD2990", "#008B45", "#838B83")) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 32, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+n_dominiocultural_long <- n_dominiocultural_long %>%
+  group_by(`Domínio Cultural`) %>%
+  mutate(is_last = ifelse(Ano == max(Ano), TRUE, FALSE))
+
+ggplot(n_dominiocultural_long, aes(x = Ano, y = Num_Eventos, group = `Domínio Cultural`, color = `Domínio Cultural`)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(n_dominiocultural_long, is_last), aes(label = `Domínio Cultural`), hjust = -0.1, vjust = 0) +
+  labs(title = "Variação do 'N' de Ações/Eventos PDC 2013 e 2022 por Domínio Cultural",
+       x = "Ano",
+       y = "Número de Eventos",
+       color = "Domínio Cultural") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    legend.position = "none"
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 33, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ranking_postos <- full_join(ranking_postos2013, ranking_postos2022, by = "Representação Oficial (Posto) responsável", suffix = c(".2013", ".2022")) %>%
+  mutate(Status = case_when(
+    !is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Repetido",
+    is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Somente 2022",
+    !is.na(Num_Eventos.2013) & is.na(Num_Eventos.2022) ~ "Somente 2013"
+  )) %>%
+  replace_na(list(Num_Eventos.2013 = 0, Num_Eventos.2022 = 0))
+
+ranking_postos <- ranking_postos %>%
+  mutate(Total_Eventos = Num_Eventos.2013 + Num_Eventos.2022)
+
+ggplot(ranking_postos, aes(x = reorder(`Representação Oficial (Posto) responsável`, -Total_Eventos), y = Total_Eventos, fill = Status)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Postos que mais implementaram Ações/Eventos PDC em 2013 e 2022",
+       x = "Representação Oficial (Posto) responsável",
+       y = "Total de Eventos por Posto") +
+  scale_fill_manual(values = c("Repetido" = "#556B2F", "Somente 2013" = "#9A32CD", "Somente 2022" = "#EE7600")) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+------------------------------------------------------------------------
+```{r Chunk 34, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+percentuaistotais_paridade <- data.frame(
+  Indicador = rep(c("Paridade de Gênero", "Paridade de Raça", "Paridade de Gênero e Raça"), 2),
+  Percentual = c(percentuaistotais_paridade2013$Percentual, percentuaistotais_paridade2022$Percentual),
+  Ano = rep(c("2013", "2022"), each = 3)
+)
+
+ggplot(percentuaistotais_paridade, aes(x = Indicador, y = Percentual, fill = Ano)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("2013" = "#9A32CD", "2022" = "#EE7600")) +
+  labs(title = "Comparação dos percentuais de Paridade de Gênero, Raça e Gênero & Raça",
+       x = "Indicador Identitário de Paridade",
+       y = "Percentual (%)",
+       fill = "Ano") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold")
+  )
+```
+---
+## Conclusões
+
+- Em termos da variável (1) **número de projetos**: houve um incremento significativo de X% no 'n' de ações/eventos PDC 2022 em relação ao 'n' de ações/eventos PDC 2013;
+
+- Em termos
+
+---
