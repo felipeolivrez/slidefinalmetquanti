@@ -364,10 +364,10 @@ Identificar, sistematizar e analisar dados relativos à implementação da polí
 
 A interposição do método CDDAF sobre dados relacionados à implementação do PDC 2013 e PDC 2022 está orientada a responder às seguintes questões de pesquisa: 
 
-- Qual a quantidade ('n') de ações/eventos PDC implementados em 2013 e em 2022? Houve incremento quantitativo nesse expediente?
-- Quais as destinações (continentes) receberam  maior quantidade ('n') de ações/eventos PDC em 2013 e 2022?
-- Quais os domínios culturais predominantes nas ações/eventos PDC em 2013 e 2022? 
-- Qual a proporcionalidade de indicadores indentitários de gênero e raça nos conteúdos artístico-culturais funcionalizados pelos PDC em 2013 e 2022?
+- **(a)** Qual a quantidade ('n') de ações/eventos PDC implementados em 2013 e em 2022? Houve incremento quantitativo nesse expediente?
+- **(b)** Quais os domínios culturais predominantes nas ações/eventos PDC em 2013 e 2022? 
+- **(c)** Quais as destinações (continentes) receberam  maior quantidade ('n') de ações/eventos PDC em 2013 e 2022?
+- **(d)** Qual a proporcionalidade de indicadores indentitários de gênero e raça nos conteúdos artístico-culturais funcionalizados pelos PDC em 2013 e 2022?
 
 ---
 ---
@@ -405,6 +405,66 @@ A interposição do método CDDAF sobre dados relacionados à implementação do
 
 ---
 ---
+```{r Chunk 28, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(n_dominiocultural2013, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
+  geom_bar(stat = "identity", fill = "#bd0026") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "'N' Ações/Eventos PDC 2013 x Domínio Cultural",
+       x = "Domínio Cultural",
+       y = "Número de Eventos") +
+  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2013$Num_Eventos), by = 10)) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+---
+```{r Chunk 30, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ggplot(n_dominiocultural2022, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
+  geom_bar(stat = "identity", fill = "#00441b") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "'N' Ações/Eventos PDC 2022 x Domínio Cultural",
+       x = "Domínio Cultural",
+       y = "Número de Eventos") +
+  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2022$Num_Eventos), by = 10)) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+---
+```{r Chunk 32, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+n_dominiocultural_long <- n_dominiocultural_long %>%
+  group_by(`Domínio Cultural`) %>%
+  mutate(is_last = ifelse(Ano == max(Ano), TRUE, FALSE))
+
+ggplot(n_dominiocultural_long, aes(x = Ano, y = Num_Eventos, group = `Domínio Cultural`, color = `Domínio Cultural`)) +
+  geom_line() +
+  geom_point() +
+  geom_text(data = filter(n_dominiocultural_long, is_last), aes(label = `Domínio Cultural`), hjust = -0.1, vjust = 0) +
+  labs(title = "Variação do 'N' de Ações/Eventos PDC 2013 e 2022 por Domínio Cultural",
+       x = "Ano",
+       y = "Número de Eventos",
+       color = "Domínio Cultural") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    legend.position = "none"
+  )
+```
+---
 ```{r Chunk 27, include=TRUE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
@@ -432,24 +492,6 @@ ggplot(n_continente2013, aes(ymax = posicao_final, ymin = posicao_inicio, xmax =
     color = "black",
     fontface = "bold",
     size = 5
-  )
-```
----
-```{r Chunk 28, include=TRUE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-ggplot(n_dominiocultural2013, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
-  geom_bar(stat = "identity", fill = "#bd0026") +
-  coord_flip() +
-  theme_minimal() +
-  labs(title = "'N' Ações/Eventos PDC 2013 x Domínio Cultural",
-       x = "Domínio Cultural",
-       y = "Número de Eventos") +
-  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2013$Num_Eventos), by = 10)) +
-  theme(
-    axis.text.x = element_text(angle = 90, hjust = 1),
-    plot.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
   )
 ```
 ------------------------------------------------------------------------
@@ -483,24 +525,6 @@ ggplot(n_continente2022, aes(ymax = posicao_final, ymin = posicao_inicio, xmax =
   )
 ```
 ------------------------------------------------------------------------
-```{r Chunk 30, include=TRUE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-ggplot(n_dominiocultural2022, aes(x = reorder(`Domínio Cultural`, Num_Eventos), y = Num_Eventos)) +
-  geom_bar(stat = "identity", fill = "#00441b") +
-  coord_flip() +
-  theme_minimal() +
-  labs(title = "'N' Ações/Eventos PDC 2022 x Domínio Cultural",
-       x = "Domínio Cultural",
-       y = "Número de Eventos") +
-  scale_y_continuous(breaks = seq(0, max(n_dominiocultural2022$Num_Eventos), by = 10)) +
-  theme(
-    axis.text.x = element_text(angle = 90, hjust = 1),
-    plot.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
-```
-------------------------------------------------------------------------
 ```{r Chunk 31, include=TRUE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
@@ -514,58 +538,6 @@ ggplot(n_continente_long, aes(x = Ano, y = Num_Eventos, group = `Destinação (C
   theme_minimal() +
   scale_color_manual(values = c("#8B4513", "#CD2626", "#00008B", "#CDAD00", "#CD2990", "#008B45", "#838B83")) +
   theme(
-    plot.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
-```
-------------------------------------------------------------------------
-```{r Chunk 32, include=TRUE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-n_dominiocultural_long <- n_dominiocultural_long %>%
-  group_by(`Domínio Cultural`) %>%
-  mutate(is_last = ifelse(Ano == max(Ano), TRUE, FALSE))
-
-ggplot(n_dominiocultural_long, aes(x = Ano, y = Num_Eventos, group = `Domínio Cultural`, color = `Domínio Cultural`)) +
-  geom_line() +
-  geom_point() +
-  geom_text(data = filter(n_dominiocultural_long, is_last), aes(label = `Domínio Cultural`), hjust = -0.1, vjust = 0) +
-  labs(title = "Variação do 'N' de Ações/Eventos PDC 2013 e 2022 por Domínio Cultural",
-       x = "Ano",
-       y = "Número de Eventos",
-       color = "Domínio Cultural") +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(face = "bold"),
-    axis.title.x = element_text(face = "bold"),
-    axis.title.y = element_text(face = "bold"),
-    legend.position = "none"
-  )
-```
-------------------------------------------------------------------------
-```{r Chunk 33, include=TRUE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
-ranking_postos <- full_join(ranking_postos2013, ranking_postos2022, by = "Representação Oficial (Posto) responsável", suffix = c(".2013", ".2022")) %>%
-  mutate(Status = case_when(
-    !is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Repetido",
-    is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Somente 2022",
-    !is.na(Num_Eventos.2013) & is.na(Num_Eventos.2022) ~ "Somente 2013"
-  )) %>%
-  replace_na(list(Num_Eventos.2013 = 0, Num_Eventos.2022 = 0))
-
-ranking_postos <- ranking_postos %>%
-  mutate(Total_Eventos = Num_Eventos.2013 + Num_Eventos.2022)
-
-ggplot(ranking_postos, aes(x = reorder(`Representação Oficial (Posto) responsável`, -Total_Eventos), y = Total_Eventos, fill = Status)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Postos que mais implementaram Ações/Eventos PDC em 2013 e 2022",
-       x = "Representação Oficial (Posto) responsável",
-       y = "Total de Eventos por Posto") +
-  scale_fill_manual(values = c("Repetido" = "#556B2F", "Somente 2013" = "#9A32CD", "Somente 2022" = "#EE7600")) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
     plot.title = element_text(face = "bold"),
     axis.title = element_text(face = "bold")
   )
@@ -595,10 +567,41 @@ ggplot(percentuaistotais_paridade, aes(x = Indicador, y = Percentual, fill = Ano
   )
 ```
 ---
+```{r Chunk 33, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+ranking_postos <- full_join(ranking_postos2013, ranking_postos2022, by = "Representação Oficial (Posto) responsável", suffix = c(".2013", ".2022")) %>%
+  mutate(Status = case_when(
+    !is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Repetido",
+    is.na(Num_Eventos.2013) & !is.na(Num_Eventos.2022) ~ "Somente 2022",
+    !is.na(Num_Eventos.2013) & is.na(Num_Eventos.2022) ~ "Somente 2013"
+  )) %>%
+  replace_na(list(Num_Eventos.2013 = 0, Num_Eventos.2022 = 0))
+
+ranking_postos <- ranking_postos %>%
+  mutate(Total_Eventos = Num_Eventos.2013 + Num_Eventos.2022)
+
+ggplot(ranking_postos, aes(x = reorder(`Representação Oficial (Posto) responsável`, -Total_Eventos), y = Total_Eventos, fill = Status)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Postos que mais implementaram Ações/Eventos PDC em 2013 e 2022",
+       x = "Representação Oficial (Posto) responsável",
+       y = "Total de Eventos por Posto") +
+  scale_fill_manual(values = c("Repetido" = "#556B2F", "Somente 2013" = "#9A32CD", "Somente 2022" = "#EE7600")) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+```
+---
 ## Conclusões
 
-- Em termos da variável (1) **número de projetos**: houve um incremento significativo de X% no 'n' de ações/eventos PDC 2022 em relação ao 'n' de ações/eventos PDC 2013;
+- Em termos da variável (1) **número de projetos**: verificou-se aumento percentual de 141,56% no 'n' de ações/eventos PDC 2022 a PDC 2013; 
 
-- Em termos
+- Em termos dos indicadores secundários de *gênero & raça*, veriricou-se: 
+  - (i) decréscimo percentual de 45,56% no 'n' de ações/eventos com marcador de paridade de gênero PDC 2022 em relação a PDC 2013; 
+  - (ii) decréscimo percentual de 40,97% no 'n' de ações/eventos com marcador de paridade de raça PDC 2022 em relação a PDC 2013; 
+  - (ii) decréscimo percentual de 73,38% no 'n' de ações/eventos com marcador de paridade de raça PDC 2022 em relação a PDC 2013.
 
 ---
